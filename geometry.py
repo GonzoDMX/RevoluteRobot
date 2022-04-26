@@ -17,6 +17,7 @@ class Point3D():
         self.x = x
         self.y = y
         self.z = z
+        self.t = np.array([[self.x, self.y, self.z, 1]]).T
 
     ''' Test if point p is the same as this one '''
     def is_equal(self, p):
