@@ -28,7 +28,8 @@ class RevoluteRobot():
         # PADDING Sets the size of the hit box around the robot
         self.padding = padding
         # EFFECTOR POSITION holds current and desired position of end effector
-        self.end_position = {'current': self.origin, 'target': self.origin}
+        #self.end_position = {'current': self.origin, 'target': self.origin}
+        self.end_position = {'current': self.origin, 'target': Point3D(0, -10, 10)}
         #JOINTS holds current transformation position of joints
         self.joints = np.array(
                             [[self.origin.x, self.origin.y, self.origin.z, 1]],
@@ -59,6 +60,7 @@ class RevoluteRobot():
                                 math.radians(theta))
         self.joint_count += 1
         self.update_posture()
+        self.end_position['target'] = Point3D(self.joints[0, -1], self.joints[1, -1], self.lengths[0])
 
     def update_posture(self):
         for i in range(self.joint_count):
@@ -95,12 +97,15 @@ class RevoluteRobot():
     def get_jacobian_matrix(self):
         # Define unit vector "k-hat" pointing along the Z axis.
         k_unit_vector = np.array([[0, 0, 1]], dtype=np.float)
-        jacobian_matrix = np.zeros((3, len(self.joints[0, :]) - 1), dtype=np.float)
+        jacobian_matrix = np.zeros((3, self.joint_count), dtype=np.float)
         end_position = self.joints[:3, [-1]]
         # Utilize cross product to compute each row of the Jacobian matrix.
-        for i in range(len(self.joints[0, :]) - 1):
+        for i in range(self.joint_count):
+            if i == 0:
+                k_unit_vector = np.array([[0, 0, 1]], dtype=np.float)
+            else:
+                k_unit_vector = np.array([[1, 0, 0]], dtype=np.float)
             joint_position = self.joints[:3, [i]]
-            #print("Joint Pos: {}".format(joint_position))
             jacobian_matrix[:, i] = np.cross(
                 k_unit_vector, (end_position - joint_position).reshape(3,))
         return jacobian_matrix
@@ -108,25 +113,33 @@ class RevoluteRobot():
     ''' Run Jacobian inverse routine to move end effector toward target '''
     def get_joint_delta(self, target):
         # Set distance to move end effector toward target per algorithm iteration.
+        print()
         step_size = 0.02 * self.reach
+        print("Step Size: {}".format(step_size))
         target_vector = (target.t - self.joints[:, [-1]])[:3]
+        print("Target_vector: {}".format(target_vector))
         t_unit_vector = target_vector / np.linalg.norm(target_vector)
+        print("T Unit Vector: {}".format(t_unit_vector))
         delta_r = step_size * t_unit_vector
+        print("Delta R: {}".format(delta_r))
         jacobian_matrix = self.get_jacobian_matrix()
+        print("Jacobian Matrix: {}".format(jacobian_matrix))
         jacobian_inverse = np.linalg.pinv(jacobian_matrix)
+        print("Jacobian Inverse: {}".format(jacobian_inverse))
         # Delta theta is the proposed angle displacement
         delta_theta = jacobian_inverse.dot(delta_r)
+        print("Delta Theta: {}".format(delta_theta))
         return delta_theta
 
     ''' Updates the robot's joint angles '''
     def update_theta(self, delta_theta):
         self.theta['theta'] += delta_theta.flatten()
         # Restrict theta to min and max bounds
-        #for i in range(self.joint_count):
-        #    if self.theta['theta'][i] < self.theta['min'][i]:
-        #        self.theta['theta'][i] = self.theta['min'][i]
-        #    if self.theta['theta'][i] > self.theta['max'][i]:
-        #        self.theta['theta'][i] = self.theta['max'][i]
+        for i in range(self.joint_count):
+            if self.theta['theta'][i] < self.theta['min'][i]:
+                self.theta['theta'][i] = self.theta['min'][i]
+            if self.theta['theta'][i] > self.theta['max'][i]:
+                self.theta['theta'][i] = self.theta['max'][i]
             #print("Joint {}: {}".format(i, self.theta['theta'][i]))
 
     ''' Step robot towards target '''

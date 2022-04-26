@@ -226,7 +226,9 @@ class RoboticArm:
         '''
         # Position of the end effector in global frame
         p_eff = self.position(Q,-1,p_eff_N)
-         
+        
+        print("my p_eff: {}".format(p_eff))
+        
         first_iter = True
          
         jacobian_matrix = None

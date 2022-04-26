@@ -18,10 +18,10 @@ def print_bot():
     print("Y: {}".format([round(i, 2) for i in myRobot.joints[1, :]]))
     print("Z: {}".format([round(i, 2) for i in myRobot.joints[2, :]]))
 
-myRobot.add_joint_link(length=9.6,  min_theta= 0,   max_theta=180, theta=90)
-myRobot.add_joint_link(length=10.5, min_theta= 0,   max_theta=180, theta=0)
-myRobot.add_joint_link(length=10.2, min_theta= 0, max_theta=90, theta=45)
-#myRobot.add_joint_link(length=11.0, min_theta= 270, max_theta=360, theta=270)
+myRobot.add_joint_link(length=10,  min_theta= 0,   max_theta=360, theta=90)
+myRobot.add_joint_link(length=10, min_theta= 0,   max_theta=360, theta=180)
+myRobot.add_joint_link(length=10, min_theta= 0, max_theta=360, theta=90)
+myRobot.add_joint_link(length=5.0, min_theta= 0, max_theta=360, theta=0)
 #myRobot.update_posture()
 #print_bot()
 
@@ -94,16 +94,17 @@ z1 = 0
 
 while not exitFlag:
     if mode == -1:
-        x1 = random.randint(0, 5)
-        y1 = random.randint(0, 5)
-        z1 = random.randint(0, 5)
+        x1 = random.randint(-10, 10)
+        y1 = random.randint(-20, -5)
+        z1 = random.randint(5, 20)
+        #z1 = 10
         print("Target: {}, {}, {}".format(x1, y1, z1))
         myRobot.set_target(x1, y1, z1)
-        myTarget.set_text("Target: X({}), Y({}), Z({})".format(x1, y1, z1))
         mode = 1
     if not myRobot.on_target():
         myRobot.move_to_target()
-        targetPt.set_data((x1, y1), z1)
+        x2, y2, _ = proj3d.proj_transform([myRobot.end_position['target'].x], [myRobot.end_position['target'].y], [ze], ax.get_proj())
+        targetPt.set_data((x2, y2))
         armPlot.set_data((myRobot.joints[0, :], myRobot.joints[1, :]), myRobot.joints[2, :])
         # Update joint angles
         for i in range(myRobot.joint_count):
@@ -123,4 +124,8 @@ while not exitFlag:
                             round(xe, 2),round(ye, 2), round(ze, 2)))
         x2, y2, _ = proj3d.proj_transform([xe], [ye], [ze], ax.get_proj())
         effector.set_position((x2,y2))
+        myTarget.set_text("Target: X({}), Y({}), Z({})".format(
+                            round(myRobot.end_position['target'].x, 2),
+                            round(myRobot.end_position['target'].y, 2),
+                            round(myRobot.end_position['target'].z, 2)))
     fig.canvas.get_tk_widget().update()
