@@ -90,7 +90,7 @@ myTarget = ax.text2D(0, 0, "Target: X(0), Y(0), Z(0)", fontsize= 'xx-large', tra
 
 # Use "exitFlag" to halt while loop execution and terminate script.
 exitFlag = False
-mode=1
+mode=0
 
 def on_key_press(event):
     '''Key press event to stop script execution if Enter is pressed,
@@ -100,7 +100,9 @@ def on_key_press(event):
     if event.key == 'enter':
         exitFlag = True
     elif event.key == 'shift':
-        mode *= -1
+        mode = 1
+    elif event.key == 'z':
+        mode = 2
 
 fig.canvas.mpl_connect('key_press_event', on_key_press)
 
@@ -111,20 +113,30 @@ plt.show()
 x1 = 0
 y1 = 0
 z1 = 0
-
+t = 0
 while not exitFlag:
-    if mode == -1:
+    if mode == 1:
         x1 = random.randint(-10, 10)
         y1 = random.randint(-20, -5)
         z1 = random.randint(5, 20)
         #z1 = 10
         print("Target: {}, {}, {}".format(x1, y1, z1))
         myRobot.set_target(x1, y1, z1)
-        mode = 1
+        targetPt.set_data_3d((x1, y1, z1))
+        #print(dir(targetPt))
+        mode = 0
+    elif mode == 2:
+        x1 = 1.1 * math.cos(0.12 * t) * 10 * math.cos(t)
+        y1 = -20
+        z1 = 15 + (1.1 * math.cos(0.2 * t) * 10 * math.sin(t))
+        targetPt.set_data_3d((x1, y1, z1))
+        myRobot.set_target(x1, y1, z1)
+        t += 0.025
+        if t > 11:
+            t = 0
+            mode = 0
     if not myRobot.on_target():
         myRobot.move_to_target()
-        x2, y2, _ = proj3d.proj_transform([myRobot.end_position['target'].x], [myRobot.end_position['target'].y], [ze], ax.get_proj())
-        targetPt.set_data((x2, y2))
         armPlot.set_data((myRobot.joints[0, :], myRobot.joints[1, :]), myRobot.joints[2, :])
         # Update joint angles
         for i in range(myRobot.joint_count):
