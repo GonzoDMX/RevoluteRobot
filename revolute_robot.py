@@ -2,7 +2,6 @@
 
 import numpy as np
 import math, random
-import matplotlib.pyplot as plt
 
 from geometry import Point3D, Target3D
 
