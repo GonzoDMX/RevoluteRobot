@@ -113,22 +113,14 @@ class RevoluteRobot():
     ''' Run Jacobian inverse routine to move end effector toward target '''
     def get_joint_delta(self, target):
         # Set distance to move end effector toward target per algorithm iteration.
-        print()
         step_size = 0.02 * self.reach
-        print("Step Size: {}".format(step_size))
         target_vector = (target.t - self.joints[:, [-1]])[:3]
-        print("Target_vector: {}".format(target_vector))
         t_unit_vector = target_vector / np.linalg.norm(target_vector)
-        print("T Unit Vector: {}".format(t_unit_vector))
         delta_r = step_size * t_unit_vector
-        print("Delta R: {}".format(delta_r))
         jacobian_matrix = self.get_jacobian_matrix()
-        print("Jacobian Matrix: {}".format(jacobian_matrix))
         jacobian_inverse = np.linalg.pinv(jacobian_matrix)
-        print("Jacobian Inverse: {}".format(jacobian_inverse))
         # Delta theta is the proposed angle displacement
         delta_theta = jacobian_inverse.dot(delta_r)
-        print("Delta Theta: {}".format(delta_theta))
         return delta_theta
 
     ''' Updates the robot's joint angles '''

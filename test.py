@@ -4,11 +4,29 @@ import sys
 import numpy as np
 import math, random
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from mpl_toolkits.mplot3d import proj3d
+from mpl_toolkits.mplot3d import Axes3D, proj3d
+import mpl_toolkits.mplot3d.art3d as art3d
 from revolute_robot import RevoluteRobot
+import matplotlib.patches as mpatches
 
 myRobot = RevoluteRobot()
+
+def arc_patch(center, radius, theta1, theta2, ax=None, resolution=50, **kwargs):
+    # make sure ax is not empty
+    if ax is None:
+        ax = plt.gca()
+    # generate the points
+    theta = np.linspace(np.radians(theta1), np.radians(theta2), resolution)
+    points = np.vstack((radius*np.cos(theta) + center[0],
+                        radius*np.sin(theta) + center[1]))
+    # build the polygon and add it to the axes
+    # for i in ["x", "y", "z"]:
+    for i in ["z"]:
+        poly = mpatches.Polygon(points.T, closed=True, **kwargs)
+        ax.add_patch(poly)
+        art3d.pathpatch_2d_to_3d(poly, z=0, zdir=i)
+    return poly
+
 
 def print_bot():
     print()
@@ -18,10 +36,10 @@ def print_bot():
     print("Y: {}".format([round(i, 2) for i in myRobot.joints[1, :]]))
     print("Z: {}".format([round(i, 2) for i in myRobot.joints[2, :]]))
 
-myRobot.add_joint_link(length=10,  min_theta= 0,   max_theta=360, theta=90)
-myRobot.add_joint_link(length=10, min_theta= 0,   max_theta=360, theta=180)
-myRobot.add_joint_link(length=10, min_theta= 0, max_theta=360, theta=90)
-myRobot.add_joint_link(length=5.0, min_theta= 0, max_theta=360, theta=0)
+myRobot.add_joint_link(length=9.4,  min_theta= 0, max_theta=360, theta=90)
+myRobot.add_joint_link(length=10.5, min_theta= 0, max_theta=360, theta=180)
+myRobot.add_joint_link(length=10.2, min_theta= 0, max_theta=360, theta=90)
+myRobot.add_joint_link(length=13.0, min_theta= 0, max_theta=360, theta=0)
 #myRobot.update_posture()
 #print_bot()
 
@@ -35,13 +53,15 @@ fig.subplots_adjust(left=0.05, bottom=0.05, right=1, top=1)
 armPlot, = ax.plot(myRobot.joints[0, :], myRobot.joints[1, :], myRobot.joints[2, :], marker='o', c='g', lw=2)
 targetPt, = ax.plot(0, 0, 0, marker="x", markersize=20, c="red")
 
+arc_patch((0.0, 0.0), myRobot.reach, 180, 360, ax=ax, fill=False, color='blue')
+
 ax.set_xlabel('$X$', fontsize=20)
 ax.set_ylabel('$Y$', fontsize=20)
 ax.set_zlabel('$Z$', fontsize=20)
 
-ax.set_xlim(-30, 30)
-ax.set_ylim(-30, 30)
-ax.set_zlim(0, 30)
+ax.set_xlim(-myRobot.reach, myRobot.reach)
+ax.set_ylim(-myRobot.reach, myRobot.reach)
+ax.set_zlim(0, myRobot.reach)
 
 # Set labels for joints
 joint_labels = []
